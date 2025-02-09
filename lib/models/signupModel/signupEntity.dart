@@ -24,7 +24,7 @@ class SignupEntity {
       'username': userName,
       'email': email,
       'phone_number': phoneNumber,
-      'password_hash': password,
+      'password': password,
       'shopname': shopName,
       'shop_address': shopAddress,
     };

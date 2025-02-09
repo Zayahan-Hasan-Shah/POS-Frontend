@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_frontend/blocs/signupBloc/signup_bloc.dart';
 import 'package:pos_frontend/models/signupModel/signupEntity.dart';
+import 'package:pos_frontend/screens/loginScreen.dart';
 import 'package:pos_frontend/widgets/customTextField.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -58,6 +59,12 @@ class SignupScreen extends StatelessWidget {
                   BlocProvider.of<SignupBloc>(context).add(SignupSubmitted(signupData));
                 },
                 child: Text('Sign Up'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(context, LoginScreen.route());
+                },
+                child: Text('Already have an account? Login'),
               ),
             ],
           ),

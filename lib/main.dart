@@ -20,20 +20,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_frontend/blocs/signupBloc/signup_bloc.dart';
+import 'package:pos_frontend/screens/cartScreen.dart';
+import 'package:pos_frontend/screens/homeScreen.dart';
+import 'package:pos_frontend/screens/inventoryScreen.dart';
 import 'package:pos_frontend/screens/signupScreen.dart';
 import 'package:pos_frontend/services/apiService.dart';
+import 'package:pos_frontend/blocs/loginBloc/login_bloc.dart';
+import 'package:pos_frontend/screens/categoryScreen.dart';
 
 void main() {
-  runApp(MyApp());
+  final apiService = ApiService(); // Create single instance
+  runApp(MyApp(apiService: apiService));
 }
 
 class MyApp extends StatelessWidget {
+  final ApiService apiService;
+
+  const MyApp({required this.apiService});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: BlocProvider(
-        create: (_) => SignupBloc(apiService: ApiService()),
-        child: SignupScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SignupBloc>(
+          create: (context) => SignupBloc(apiService: apiService),
+        ),
+        BlocProvider<LoginBloc>(
+          create: (context) => LoginBloc(apiService: apiService),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: SignupScreen(),
+        routes: {
+          '/dashboard': (context) => HomeScreen(apiService: apiService),
+          '/categories': (context) => CategoryScreen(apiService: apiService),
+          '/inventory': (context) => InventoryScreen(apiService: apiService),
+          '/reports': (context) => HomeScreen(apiService: apiService),
+          '/addproductstocart': (context) => CartScreen(apiService: apiService),
+          '/customers': (context) => HomeScreen(apiService: apiService),
+          '/suppliers': (context) => HomeScreen(apiService: apiService),
+          '/settings': (context) => HomeScreen(apiService: apiService),
+        },
       ),
     );
   }
