@@ -4,11 +4,15 @@ class DashboardEntity {
   final String shopAddress;
   final int totalCategories;
   final int totalProducts;
-  final double incomeToday;
-  final double incomeMonth;
+  final double totalRevenue;
+  final double totalCost;
+  final double netProfit;
+  final double todayRevenue;
+  final double todayProfit;
+  final double monthlyRevenue;
+  final double monthlyProfit;
   final int totalSales;
   final int productsSold;
-  final double netProfit;
   final int productsInStock;
 
   DashboardEntity({
@@ -17,11 +21,15 @@ class DashboardEntity {
     required this.shopAddress,
     required this.totalCategories,
     required this.totalProducts,
-    required this.incomeToday,
-    required this.incomeMonth,
+    required this.totalRevenue,
+    required this.totalCost,
+    required this.netProfit,
+    required this.todayProfit,
+    required this.todayRevenue,
+    required this.monthlyRevenue,
+    required this.monthlyProfit,
     required this.totalSales,
     required this.productsSold,
-    required this.netProfit,
     required this.productsInStock,
   });
 
@@ -32,11 +40,15 @@ class DashboardEntity {
       shopAddress: json['shop_address'],
       totalCategories: json['total_categories'],
       totalProducts: json['total_products'],
-      incomeToday: json['income_today'].toDouble(),
-      incomeMonth: json['income_month'].toDouble(),
+      totalRevenue: (json['totalRevenue'] ?? 0.0).toDouble(),
+      totalCost: (json['totalCost'] ?? 0.0).toDouble(),
+      netProfit: (json['netProfit'] ?? 0.0).toDouble(),
+      todayRevenue: (json['todayRevenue'] ?? 0.0).toDouble(),
+      todayProfit: (json['todayProfit'] ?? 0.0).toDouble(),
+      monthlyRevenue: (json['monthlyRevenue'] ?? 0.0).toDouble(),
+      monthlyProfit: (json['monthlyProfit'] ?? 0.0).toDouble(),
       totalSales: json['total_sales'],
       productsSold: json['products_sold'],
-      netProfit: json['net_profit'].toDouble(),
       productsInStock: json['products_in_stock'],
     );
   }

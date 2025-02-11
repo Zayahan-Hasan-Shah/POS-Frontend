@@ -12,7 +12,7 @@ class InvoiceScreen extends StatelessWidget {
     Key? key,
     required this.cartItems,
     required this.total,
-    required this.paymentMethod,
+    required this.paymentMethod, required String customerNumber,
   }) : super(key: key);
 
   @override
@@ -61,7 +61,7 @@ class InvoiceScreen extends StatelessWidget {
                   title: Text(item.product.name),
                   subtitle: Text('${item.quantity} x \$${item.product.price}'),
                   trailing: Text(
-                    '\$${(item.quantity * item.product.price).toStringAsFixed(2)}',
+                    'Rs.${(item.quantity * item.product.price).toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 );
@@ -113,9 +113,14 @@ class InvoiceScreen extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Implement print functionality
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Printing invoice...')),
+                  );
+                  // Navigate to home screen
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/dashboard',
+                    (route) => false,
                   );
                 },
                 icon: const Icon(Icons.print),
@@ -123,9 +128,14 @@ class InvoiceScreen extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Implement download functionality
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Downloading invoice...')),
+                  );
+                  // Navigate to home screen
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/dashboard',
+                    (route) => false,
                   );
                 },
                 icon: const Icon(Icons.download),

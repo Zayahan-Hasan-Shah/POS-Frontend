@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:pos_frontend/models/cartModel/cartItem.dart';
+import 'package:pos_frontend/models/salesModel/salesModel.dart';
 import 'package:pos_frontend/screens/invoiceScreen.dart';
+import 'package:pos_frontend/services/apiService.dart';
 
 class PaymentScreen extends StatefulWidget {
   final List<CartItem> cartItems;
   final double total;
+  final ApiService apiService;
 
   const PaymentScreen({
     Key? key,
     required this.cartItems,
     required this.total,
+    required this.apiService,
   }) : super(key: key);
 
   @override
@@ -18,13 +22,112 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   String? _selectedPaymentMethod;
+  String? _selectedOnlineMethod;
+  final TextEditingController _numberController = TextEditingController();
+
+  void _showNumberDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Enter Customer Number'),
+          content: TextField(
+            controller: _numberController,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              hintText: 'Enter phone number',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Save the customer's number and navigate to the invoice screen
+                final String number = _numberController.text;
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InvoiceScreen(
+                      cartItems: widget.cartItems,
+                      total: widget.total,
+                      paymentMethod: _selectedPaymentMethod ?? 'Cash',
+                      customerNumber: number,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOnlinePaymentMethods() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Payment Method'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Image.asset(
+                  'lib/assets/images/jazzcash.png',
+                  width: 40,
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.payment, size: 40),
+                ),
+                title: const Text('JazzCash'),
+                onTap: () {
+                  setState(() {
+                    _selectedPaymentMethod = 'online';
+                    _selectedOnlineMethod = 'JazzCash';
+                  });
+                  Navigator.pop(context);
+                  _showNumberDialog();
+                },
+              ),
+              ListTile(
+                leading: Image.asset(
+                  'lib/assets/images/easypaisa.png',
+                  width: 40,
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.payment, size: 40),
+                ),
+                title: const Text('EasyPaisa'),
+                onTap: () {
+                  setState(() {
+                    _selectedPaymentMethod = 'online';
+                    _selectedOnlineMethod = 'EasyPaisa';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Payment'),
-        elevation: 0,
+        // elevation: 0,
       ),
       body: Column(
         children: [
@@ -70,7 +173,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                             ),
                             Text(
-                              '\$${widget.total.toStringAsFixed(2)}',
+                              'Rs.${widget.total.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -112,13 +215,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const SizedBox(height: 12),
                         // Online Option
                         PaymentMethodCard(
-                          title: 'Online Payment',
+                          title: _selectedOnlineMethod ?? 'Online Payment',
                           icon: Icons.payment,
                           isSelected: _selectedPaymentMethod == 'online',
                           onTap: () {
-                            setState(() {
-                              _selectedPaymentMethod = 'online';
-                            });
+                            _showOnlinePaymentMethods();
                           },
                         ),
                       ],
@@ -135,18 +236,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: FloatingActionButton.extended(
               onPressed: _selectedPaymentMethod == null
                   ? null
-                  : () {
-                      // Process payment here
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => InvoiceScreen(
-                            cartItems: widget.cartItems,
-                            total: widget.total,
-                            paymentMethod: _selectedPaymentMethod ?? 'Cash',
+                  : () async {
+                      try {
+                        // Update inventory for each item
+                        for (var item in widget.cartItems) {
+                          await widget.apiService.updateProduct(
+                            item.product.id!,
+                            item.product.name,
+                            item.product.price,
+                            item.product.cost_price,
+                            item.product.quantity - item.quantity,
+                            item.product.categoryId!,
+                          );
+                        }
+
+                        // Add sales to the database
+                        for (var item in widget.cartItems) {
+                          await widget.apiService.addSales(
+                            SalesEntity(
+                              product_id: item.product.id,
+                              quantity: item.quantity,
+                              total_price: item.product.price * item.quantity,
+                              payment_method: _selectedPaymentMethod ?? 'Cash',
+                            ),
+                          );
+                        }
+
+                        // Navigate to invoice and clear previous screens
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InvoiceScreen(
+                              cartItems: widget.cartItems,
+                              total: widget.total,
+                              paymentMethod: _selectedPaymentMethod ?? 'Cash',
+                              customerNumber: _numberController.text,
+                            ),
                           ),
-                        ),
-                      );
+                          (route) =>
+                              false, // This will clear all previous routes
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Error processing payment: $e')),
+                        );
+                      }
                     },
               label: const Text(
                 'Pay Now',

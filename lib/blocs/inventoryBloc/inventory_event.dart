@@ -5,12 +5,14 @@ class LoadInventory extends InventoryEvent {}
 class AddProduct extends InventoryEvent {
   final String name;
   final double price;
+  final double costPrice;
   final int quantity;
   final int categoryId;
 
   AddProduct({
     required this.name,
     required this.price,
+    required this.costPrice,
     required this.quantity,
     required this.categoryId,
   });
@@ -20,6 +22,7 @@ class UpdateProduct extends InventoryEvent {
   final int id;
   final String name;
   final double price;
+  final double costPrice;
   final int quantity;
   final int categoryId;
 
@@ -27,6 +30,7 @@ class UpdateProduct extends InventoryEvent {
     required this.id,
     required this.name,
     required this.price,
+    required this.costPrice,
     required this.quantity,
     required this.categoryId,
   });

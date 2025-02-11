@@ -20,10 +20,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_frontend/blocs/signupBloc/signup_bloc.dart';
+import 'package:pos_frontend/screens/alertScreen.dart';
 import 'package:pos_frontend/screens/cartScreen.dart';
 import 'package:pos_frontend/screens/homeScreen.dart';
 import 'package:pos_frontend/screens/inventoryScreen.dart';
 import 'package:pos_frontend/screens/signupScreen.dart';
+import 'package:pos_frontend/screens/splashScreen.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/blocs/loginBloc/login_bloc.dart';
 import 'package:pos_frontend/screens/categoryScreen.dart';
@@ -51,11 +53,12 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: SignupScreen(),
+        home: const SplashScreen(),
         routes: {
           '/dashboard': (context) => HomeScreen(apiService: apiService),
           '/categories': (context) => CategoryScreen(apiService: apiService),
           '/inventory': (context) => InventoryScreen(apiService: apiService),
+          '/alerts': (context) => AlertScreen(apiService: apiService),
           '/reports': (context) => HomeScreen(apiService: apiService),
           '/addproductstocart': (context) => CartScreen(apiService: apiService),
           '/customers': (context) => HomeScreen(apiService: apiService),

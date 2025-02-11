@@ -34,6 +34,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       await apiService.addProduct(
         event.name,
         event.price,
+        event.costPrice,
         event.quantity,
         event.categoryId,
       );
@@ -52,6 +53,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         event.id,
         event.name,
         event.price,
+        event.costPrice,
         event.quantity,
         event.categoryId,
       );

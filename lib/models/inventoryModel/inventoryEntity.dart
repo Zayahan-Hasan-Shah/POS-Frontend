@@ -2,6 +2,7 @@ class InventoryEntity {
   final int? id;
   final String name;
   final double price;
+  final double cost_price;
   final int quantity;
   final int? categoryId;
   final String? categoryName;
@@ -10,6 +11,7 @@ class InventoryEntity {
     this.id,
     required this.name,
     required this.price,
+    required this.cost_price,
     required this.quantity,
     this.categoryId,
     this.categoryName,
@@ -20,6 +22,7 @@ class InventoryEntity {
       id: json['id']?.toInt(),
       name: json['name'] ?? '',
       price: (json['price'] ?? 0).toDouble(),
+      cost_price: (json['cost_price'] ?? 0).toDouble(),
       quantity: json['quantity']?.toInt() ?? 0,
       categoryId: json['category_id']?.toInt(),
       categoryName: json['category_name'],
@@ -31,6 +34,3 @@ class InventoryEntity {
     return 'InventoryEntity(id: $id, name: $name, price: $price, quantity: $quantity, categoryId: $categoryId, categoryName: $categoryName)';
   }
 }
-
-
-

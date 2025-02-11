@@ -72,14 +72,69 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  // void _addToCart(InventoryEntity product) {
+  //   print('Attempting to add product to cart: ${product.name}');
+
+  //   setState(() {
+  //     final existingItemIndex =
+  //         cartItems.indexWhere((item) => item.product.id == product.id);
+  //     print('Existing item index: $existingItemIndex');
+
+  //     if (existingItemIndex != -1) {
+  //       print('Updating existing item quantity');
+  //       cartItems[existingItemIndex].quantity++;
+  //     } else {
+  //       print('Adding new item to cart');
+  //       cartItems.add(CartItem(product: product, quantity: 1));
+  //     }
+
+  //     print('Cart items count: ${cartItems.length}');
+  //     _updateTotal();
+
+  //     // Show snackbar from top
+  //     ScaffoldMessenger.of(context)
+  //       ..clearSnackBars()
+  //       ..showSnackBar(
+  //         SnackBar(
+  //           content: Text('${product.name} added to cart'),
+  //           duration: const Duration(seconds: 1),
+  //           behavior: SnackBarBehavior.floating, // Makes it float
+  //           margin: EdgeInsets.only(
+  //             bottom: MediaQuery.of(context).size.height - 100,
+  //             right: 20,
+  //             left: 20,
+  //           ),
+  //         ),
+  //       );
+  //   });
+  // }
+
   void _addToCart(InventoryEntity product) {
     print('Attempting to add product to cart: ${product.name}');
 
-    setState(() {
-      final existingItemIndex =
-          cartItems.indexWhere((item) => item.product.id == product.id);
-      print('Existing item index: $existingItemIndex');
+    // Check if adding one more item would exceed available stock
+    final existingItemIndex =
+        cartItems.indexWhere((item) => item.product.id == product.id);
+    int currentQuantityInCart =
+        existingItemIndex != -1 ? cartItems[existingItemIndex].quantity : 0;
 
+    if (currentQuantityInCart + 1 > product.quantity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Not enough stock for ${product.name}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 100,
+            right: 20,
+            left: 20,
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
       if (existingItemIndex != -1) {
         print('Updating existing item quantity');
         cartItems[existingItemIndex].quantity++;
@@ -87,27 +142,58 @@ class _CartScreenState extends State<CartScreen> {
         print('Adding new item to cart');
         cartItems.add(CartItem(product: product, quantity: 1));
       }
-
       print('Cart items count: ${cartItems.length}');
       _updateTotal();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${product.name} added to cart'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      // Show success snackbar
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('${product.name} added to cart'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height - 100,
+              right: 20,
+              left: 20,
+            ),
+          ),
+        );
     });
   }
 
-  void _removeFromCart(CartItem item) {
-    setState(() {
-      cartItems.remove(item);
-      _updateTotal();
-    });
-  }
+  // void _removeFromCart(CartItem item) {
+  //   setState(() {
+  //     cartItems.remove(item);
+  //     _updateTotal();
+  //   });
+  // }
+
+  // void _updateQuantity(CartItem item, int newQuantity) {
+  //   if (newQuantity > 0) {
+  //     setState(() {
+  //       item.quantity = newQuantity;
+  //       _updateTotal();
+  //     });
+  //   } else {
+  //     _removeFromCart(item);
+  //   }
+  // }
 
   void _updateQuantity(CartItem item, int newQuantity) {
+    // Check if the new quantity exceeds available stock
+    if (newQuantity > item.product.quantity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Not enough stock for ${item.product.name}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (newQuantity > 0) {
       setState(() {
         item.quantity = newQuantity;
@@ -118,10 +204,42 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  void _removeFromCart(CartItem item) {
+    setState(() {
+      cartItems.remove(item);
+      _updateTotal();
+
+      // Show removal notification
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('${item.product.name} removed from cart'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height - 100,
+              right: 20,
+              left: 20,
+            ),
+          ),
+        );
+    });
+  }
+
+  void _checkStock(InventoryEntity product) {
+    if (product.quantity <
+        cartItems.fold(0, (sum, item) => sum + item.quantity)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Not enough stock for ${product.name}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SidebarScreen(),
+      drawer: SidebarScreen(apiService: widget.apiService),
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
@@ -332,7 +450,7 @@ class _CartScreenState extends State<CartScreen> {
                         _showCart(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        // backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: Theme.of(context).primaryColor,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 32, vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -344,7 +462,7 @@ class _CartScreenState extends State<CartScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -614,6 +732,7 @@ class _CartScreenState extends State<CartScreen> {
                     builder: (context) => PaymentScreen(
                       cartItems: cartItems,
                       total: _total,
+                      apiService: widget.apiService,
                     ),
                   ),
                 );

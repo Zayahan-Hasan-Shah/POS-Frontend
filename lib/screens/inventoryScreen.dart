@@ -18,7 +18,16 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
+  // late final InventoryBloc _inventoryBloc;
+  // List<InventoryEntity> _filteredProducts = [];
+  // List<InventoryEntity> _products = [];
+  // final TextEditingController _searchController = TextEditingController();
   late final InventoryBloc _inventoryBloc;
+  List<InventoryEntity> _filteredProducts = [];
+  List<InventoryEntity> _products = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _sortOrder = 'none'; // Add this variable for tracking sort order
+  List<InventoryEntity> _currentProducts = [];
 
   @override
   void initState() {
@@ -33,6 +42,37 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.dispose();
   }
 
+  void _sortProducts(String order) {
+    setState(() {
+      _sortOrder = order;
+      switch (order) {
+        case 'high_to_low':
+          _products.sort((a, b) => b.quantity.compareTo(a.quantity));
+          break;
+        case 'low_to_high':
+          _products.sort((a, b) => a.quantity.compareTo(b.quantity));
+          break;
+        default:
+          // Reset to original order if needed
+          _inventoryBloc.add(LoadInventory());
+          break;
+      }
+    });
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProducts = _products;
+      } else {
+        _filteredProducts = _products
+            .where((product) =>
+                product.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -42,13 +82,52 @@ class _InventoryScreenState extends State<InventoryScreen> {
           appBar: AppBar(
             title: const Text('Inventory'),
             actions: [
+              // Add PopupMenuButton for sorting
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.filter_list),
+                tooltip: 'Sort Products',
+                onSelected: (String value) {
+                  setState(() {
+                    _sortOrder = value;
+                    if (_currentProducts.isNotEmpty) {
+                      switch (value) {
+                        case 'high_to_low':
+                          _currentProducts
+                              .sort((a, b) => b.quantity.compareTo(a.quantity));
+                          break;
+                        case 'low_to_high':
+                          _currentProducts
+                              .sort((a, b) => a.quantity.compareTo(b.quantity));
+                          break;
+                        case 'none':
+                          _currentProducts = List.from(_products);
+                          break;
+                      }
+                    }
+                  });
+                },
+                itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem(
+                    value: 'high_to_low',
+                    child: Text('Quantity: High to Low'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'low_to_high',
+                    child: Text('Quantity: Low to High'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'none',
+                    child: Text('Clear Sorting'),
+                  ),
+                ],
+              ),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: () => _showAddProductDialog(context),
               ),
             ],
           ),
-          drawer: const SidebarScreen(),
+          drawer: SidebarScreen(apiService: widget.apiService),
           body: BlocBuilder<InventoryBloc, InventoryState>(
             builder: (context, state) {
               if (state is InventoryLoading) {
@@ -58,6 +137,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 return Center(child: Text(state.message));
               }
               if (state is InventoryLoaded) {
+                List<InventoryEntity> _currentProducts =
+                    List.from(state.products);
+                // Apply sorting
+                switch (_sortOrder) {
+                  case 'high_to_low':
+                    _currentProducts
+                        .sort((a, b) => b.quantity.compareTo(a.quantity));
+                    break;
+                  case 'low_to_high':
+                    _currentProducts
+                        .sort((a, b) => a.quantity.compareTo(b.quantity));
+                    break;
+                  case 'none':
+                    // Use original order
+                    break;
+                }
                 return _buildProductList(context, state.products);
               }
               return const Center(child: Text('No products found'));
@@ -70,6 +165,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Widget _buildProductList(
       BuildContext context, List<InventoryEntity> products) {
+    // Store the products in the state
+    _products = List.from(products);
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: products.length,
@@ -89,7 +187,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Price: \$${product.price.toStringAsFixed(2)}'),
+                Text('Price: Rs.${product.price.toStringAsFixed(2)}'),
                 Text('Quantity: ${product.quantity}'),
                 if (product.categoryName != null)
                   Text('Category: ${product.categoryName}'),
@@ -123,6 +221,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _showAddProductDialog(BuildContext parentContext) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
+    final costPriceController = TextEditingController();
     final quantityController = TextEditingController();
     CategoryEntity? selectedCategory;
 
@@ -142,6 +241,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
               TextField(
                 controller: priceController,
                 decoration: const InputDecoration(labelText: 'Price'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: costPriceController,
+                decoration: const InputDecoration(labelText: 'Cost Price'),
                 keyboardType: TextInputType.number,
               ),
               TextField(
@@ -228,6 +332,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         AddProduct(
                           name: nameController.text,
                           price: double.parse(priceController.text),
+                          costPrice: double.parse(costPriceController.text),
                           quantity: int.parse(quantityController.text),
                           categoryId: selectedCategory!.id!,
                         ),
@@ -258,6 +363,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final nameController = TextEditingController(text: product.name);
     final priceController =
         TextEditingController(text: product.price.toStringAsFixed(2));
+    final costPriceController =
+        TextEditingController(text: product.cost_price.toStringAsFixed(2));
     final quantityController =
         TextEditingController(text: product.quantity.toString());
     CategoryEntity? selectedCategory;
@@ -363,12 +470,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 print('Attempting to update product:');
                 print('Name: ${nameController.text}');
                 print('Price: ${priceController.text}');
+                print('Price: ${costPriceController.text}');
                 print('Quantity: ${quantityController.text}');
                 print(
                     'Category: ${selectedCategory?.name}, ID: ${selectedCategory?.id}');
 
                 if (nameController.text.isNotEmpty &&
                     priceController.text.isNotEmpty &&
+                    costPriceController.text.isNotEmpty &&
                     quantityController.text.isNotEmpty &&
                     selectedCategory?.id != null) {
                   parentContext.read<InventoryBloc>().add(
@@ -376,6 +485,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           id: product.id!,
                           name: nameController.text,
                           price: double.parse(priceController.text),
+                          costPrice: double.parse(costPriceController.text),
                           quantity: int.parse(quantityController.text),
                           categoryId: selectedCategory!.id!,
                         ),

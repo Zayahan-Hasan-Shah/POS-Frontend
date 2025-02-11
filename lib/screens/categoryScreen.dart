@@ -47,7 +47,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
             ],
           ),
-          drawer: const SidebarScreen(),
+          drawer: SidebarScreen(apiService: widget.apiService),
           body: BlocBuilder<CategoryBloc, CategoryState>(
             builder: (context, state) {
               if (state is CategoryLoading) {
@@ -143,7 +143,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  void _showEditCategoryDialog(BuildContext parentContext, CategoryEntity category) {
+  void _showEditCategoryDialog(
+      BuildContext parentContext, CategoryEntity category) {
     final nameController = TextEditingController(text: category.name);
 
     showDialog(
@@ -179,7 +180,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext parentContext, CategoryEntity category) {
+  void _showDeleteConfirmation(
+      BuildContext parentContext, CategoryEntity category) {
     if (category.id == null) return;
 
     showDialog(
@@ -194,7 +196,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              parentContext.read<CategoryBloc>().add(DeleteCategory(id: category.id!));
+              parentContext
+                  .read<CategoryBloc>()
+                  .add(DeleteCategory(id: category.id!));
               Navigator.pop(dialogContext);
             },
             style: ElevatedButton.styleFrom(
