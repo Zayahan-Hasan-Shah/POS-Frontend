@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pos_frontend/models/SupplierModel/supplierModel.dart';
 import 'package:pos_frontend/models/chartModel/chartEntity.dart';
+import 'package:pos_frontend/models/customerModel/customerEntity.dart';
 import 'package:pos_frontend/models/loginModel/loginEntity.dart';
 import 'package:pos_frontend/models/salesModel/salesModel.dart';
 import 'package:pos_frontend/models/signupModel/signupEntity.dart';
@@ -699,6 +701,249 @@ class ApiService {
     } catch (e) {
       print('Error fetching low stock products: $e');
       throw Exception('Error fetching low stock products: $e');
+    }
+  }
+
+  // Customer related methods
+  Future<List<Customer>> getCustomers() async {
+    final url = Uri.parse('$baseUrl/customers');
+
+    try {
+      if (_accessToken == null) {
+        throw Exception('No access token available');
+      }
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      print('Customers API Response Status: ${response.statusCode}');
+      print('Customers API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Customer.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load customers: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching customers: $e');
+      rethrow;
+    }
+  }
+
+  Future<Customer> getCustomer(int id) async {
+    final url = Uri.parse('$baseUrl/customers/$id');
+
+    try {
+      if (_accessToken == null) {
+        throw Exception('No access token available');
+      }
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return Customer.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to load customer: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching customer: $e');
+      rethrow;
+    }
+  }
+
+  Future<Customer> createCustomer(Customer customer) async {
+    final url = Uri.parse('$baseUrl/customers/create-customer');
+
+    try {
+      if (_accessToken == null) {
+        throw Exception('No access token available');
+      }
+
+      print('-----Making create customer request to: $url----');
+      print('-----Request body: ${customer.toJson()}----');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: json.encode(customer.toJson()),
+      );
+
+      print('-----Create Customer Response Status: ${response.statusCode}----');
+      print('-----Create Customer Response Body: ${response.body}----');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Customer.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to create customer: ${response.body}');
+      }
+    } catch (e) {
+      print('Error creating customer: $e');
+      rethrow;
+    }
+  }
+
+  Future<Customer> updateCustomer(int id, Customer customer) async {
+    final url = Uri.parse('$baseUrl/customers/single-customer/$id');
+
+    try {
+      if (_accessToken == null) {
+        throw Exception('No access token available');
+      }
+
+      print('-----Making update customer request to: $url----');
+      print('-----Request body: ${customer.toJson()}----');
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: json.encode(customer.toJson()),
+      );
+
+      print('-----Update Customer Response Status: ${response.statusCode}----');
+      print('-----Update Customer Response Body: ${response.body}----');
+
+      if (response.statusCode == 200) {
+        return Customer.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to update customer: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating customer: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteCustomer(int id) async {
+    final url = Uri.parse('$baseUrl/customers/delete-customer/$id');
+
+    try {
+      if (_accessToken == null) {
+        throw Exception('No access token available');
+      }
+
+      print('-----Making delete customer request to: $url----');
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      print('-----Delete Customer Response Status: ${response.statusCode}----');
+      print('-----Delete Customer Response Body: ${response.body}----');
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete customer: ${response.body}');
+      }
+    } catch (e) {
+      print('Error deleting customer: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Supplier>> getSuppliers() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/supplier/suppliers'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_accessToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      List<Supplier> suppliers = data.map((json) => Supplier.fromJson(json)).toList();
+      return suppliers;
+    } else {
+      throw Exception('Failed to load suppliers: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching suppliers: $e');
+    rethrow;
+  }
+}
+
+  Future<Supplier> createSupplier(Supplier supplier) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/supplier/create-supplier'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: json.encode(supplier.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return Supplier.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to create supplier');
+      }
+    } catch (e) {
+      print('Error creating supplier: $e');
+      rethrow;
+    }
+  }
+
+  Future<Supplier> updateSupplier(int id, Supplier supplier) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/supplier/update-supplier/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: json.encode(supplier.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return Supplier.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to update supplier');
+      }
+    } catch (e) {
+      print('Error updating supplier: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteSupplier(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/supplier/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete supplier');
+      }
+    } catch (e) {
+      print('Error deleting supplier: $e');
+      rethrow;
     }
   }
 }

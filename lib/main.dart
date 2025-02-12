@@ -19,13 +19,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_frontend/blocs/customerBloc/customer_bloc.dart';
 import 'package:pos_frontend/blocs/signupBloc/signup_bloc.dart';
+import 'package:pos_frontend/blocs/supplierBloc/supplier_bloc.dart';
 import 'package:pos_frontend/screens/alertScreen.dart';
 import 'package:pos_frontend/screens/cartScreen.dart';
+import 'package:pos_frontend/screens/customerScreen.dart';
 import 'package:pos_frontend/screens/homeScreen.dart';
 import 'package:pos_frontend/screens/inventoryScreen.dart';
 import 'package:pos_frontend/screens/signupScreen.dart';
 import 'package:pos_frontend/screens/splashScreen.dart';
+import 'package:pos_frontend/screens/supplierScreen.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/blocs/loginBloc/login_bloc.dart';
 import 'package:pos_frontend/screens/categoryScreen.dart';
@@ -50,6 +54,16 @@ class MyApp extends StatelessWidget {
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(apiService: apiService),
         ),
+        BlocProvider<CustomerBloc>(
+          create: (context) => CustomerBloc(
+            apiService: apiService,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => SupplierBloc(
+            apiService: ApiService(),
+          ),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -61,8 +75,8 @@ class MyApp extends StatelessWidget {
           '/alerts': (context) => AlertScreen(apiService: apiService),
           '/reports': (context) => HomeScreen(apiService: apiService),
           '/addproductstocart': (context) => CartScreen(apiService: apiService),
-          '/customers': (context) => HomeScreen(apiService: apiService),
-          '/suppliers': (context) => HomeScreen(apiService: apiService),
+          '/customers': (context) => CustomerScreen(apiService: apiService),
+          '/suppliers': (context) => SupplierScreen(apiService: apiService),
           '/settings': (context) => HomeScreen(apiService: apiService),
         },
       ),

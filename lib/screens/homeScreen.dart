@@ -347,13 +347,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       StatItem(
         'Today\'s Revenue',
-        '\$${dashboard.todayRevenue.toStringAsFixed(2)}',
+        'Rs.${dashboard.todayRevenue.toStringAsFixed(2)}',
         Icons.attach_money,
         Colors.orange,
       ),
       StatItem(
         'Monthly Revenue',
-        '\$${dashboard.monthlyRevenue.toStringAsFixed(2)}',
+        'Rs.${dashboard.monthlyRevenue.toStringAsFixed(2)}',
         Icons.calendar_today,
         Colors.purple,
       ),
@@ -371,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       StatItem(
         'Net Profit',
-        '\$${dashboard.netProfit.toStringAsFixed(2)}',
+        'Rs.${dashboard.netProfit.toStringAsFixed(2)}',
         Icons.trending_up,
         Colors.indigo,
       ),

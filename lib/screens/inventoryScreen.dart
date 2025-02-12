@@ -388,6 +388,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 keyboardType: TextInputType.number,
               ),
               TextField(
+                controller: costPriceController,
+                decoration: const InputDecoration(labelText: 'Cost price'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
                 controller: quantityController,
                 decoration: const InputDecoration(labelText: 'Quantity'),
                 keyboardType: TextInputType.number,

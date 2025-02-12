@@ -368,7 +368,7 @@ class _CartScreenState extends State<CartScreen> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          '\$${product.price.toStringAsFixed(2)}',
+                                          'Rs.${product.price.toStringAsFixed(2)}',
                                           style: TextStyle(
                                             color:
                                                 Theme.of(context).primaryColor,
@@ -436,7 +436,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '\$${_total.toStringAsFixed(2)}',
+                            'Rs.${_total.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
@@ -568,7 +568,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '\$${item.product.price.toStringAsFixed(2)}',
+                                'Rs.${item.product.price.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold,
@@ -632,7 +632,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         Text(
-                          '\$${_total.toStringAsFixed(2)}',
+                          'Rs.${_total.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -700,7 +700,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Total Amount: \$${_total.toStringAsFixed(2)}',
+                'Total Amount: Rs.${_total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

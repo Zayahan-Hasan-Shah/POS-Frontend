@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_frontend/models/cartModel/cartItem.dart';
+import 'package:pos_frontend/models/customerModel/customerEntity.dart';
 import 'package:pos_frontend/widgets/app_drawer.dart';
 import 'package:intl/intl.dart';
 
@@ -7,13 +8,18 @@ class InvoiceScreen extends StatelessWidget {
   final List<CartItem> cartItems;
   final double total;
   final String paymentMethod;
+  final String customerNumber;
+  final Customer customer;  // This should be of type Customer
 
   const InvoiceScreen({
     Key? key,
     required this.cartItems,
     required this.total,
-    required this.paymentMethod, required String customerNumber,
+    required this.paymentMethod,
+    required this.customerNumber,
+    required this.customer,
   }) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +65,7 @@ class InvoiceScreen extends StatelessWidget {
                 final item = cartItems[index];
                 return ListTile(
                   title: Text(item.product.name),
-                  subtitle: Text('${item.quantity} x \$${item.product.price}'),
+                  subtitle: Text('${item.quantity} x Rs.${item.product.price}'),
                   trailing: Text(
                     'Rs.${(item.quantity * item.product.price).toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -93,7 +99,7 @@ class InvoiceScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 20),
                 ),
                 Text(
-                  '\$${total.toStringAsFixed(2)}',
+                  'Rs.${total.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
