@@ -568,6 +568,8 @@ class CustomerScreenState extends State<CustomerScreen> {
                   itemBuilder: (context, index) {
                     final customer = customers[index];
                     return Card(
+                      color: Theme.of(context).primaryColor.withOpacity(0.4),
+                        shadowColor: Colors.black26,
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,

@@ -255,6 +255,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Dashboard'),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: IconButton(
+                onPressed: () {
+                  ApiService().logout(); // Clear token
+
+                  // Navigate to login screen and remove dashboard from history
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/login', (route) => false);
+                },
+                icon: Icon(Icons.login_outlined)),
+          )
+        ],
       ),
       drawer: SidebarScreen(apiService: widget.apiService),
       body: FutureBuilder<List<dynamic>>(

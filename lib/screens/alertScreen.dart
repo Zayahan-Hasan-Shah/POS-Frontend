@@ -88,7 +88,7 @@ class _AlertScreenState extends State<AlertScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Price: \$${product.price.toStringAsFixed(2)}'),
+                      Text('Price: Rs.${product.price.toStringAsFixed(2)}'),
                       if (product.categoryName != null)
                         Text('Category: ${product.categoryName}'),
                     ],

@@ -27,9 +27,11 @@ import 'package:pos_frontend/screens/cartScreen.dart';
 import 'package:pos_frontend/screens/customerScreen.dart';
 import 'package:pos_frontend/screens/homeScreen.dart';
 import 'package:pos_frontend/screens/inventoryScreen.dart';
+import 'package:pos_frontend/screens/loginScreen.dart';
 import 'package:pos_frontend/screens/signupScreen.dart';
 import 'package:pos_frontend/screens/splashScreen.dart';
 import 'package:pos_frontend/screens/supplierScreen.dart';
+import 'package:pos_frontend/screens/trackSales.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/blocs/loginBloc/login_bloc.dart';
 import 'package:pos_frontend/screens/categoryScreen.dart';
@@ -69,11 +71,12 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: const SplashScreen(),
         routes: {
+          '/login': (context) => LoginScreen(),
+          '/signup': (context) => SignupScreen(),
           '/dashboard': (context) => HomeScreen(apiService: apiService),
           '/categories': (context) => CategoryScreen(apiService: apiService),
           '/inventory': (context) => InventoryScreen(apiService: apiService),
-          '/alerts': (context) => AlertScreen(apiService: apiService),
-          '/reports': (context) => HomeScreen(apiService: apiService),
+          '/tracksales' : (context) => TrackSalesScreen(apiService: apiService,),
           '/addproductstocart': (context) => CartScreen(apiService: apiService),
           '/customers': (context) => CustomerScreen(apiService: apiService),
           '/suppliers': (context) => SupplierScreen(apiService: apiService),
@@ -83,3 +86,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

@@ -244,6 +244,8 @@ class _SupplierScreenState extends State<SupplierScreen> {
                     itemBuilder: (context, index) {
                       final supplier = state.suppliers[index];
                       return Card(
+                        color: Theme.of(context).primaryColor.withOpacity(0.4),
+                        shadowColor: Colors.black26,
                         margin: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,

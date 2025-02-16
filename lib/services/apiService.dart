@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:pos_frontend/models/SupplierModel/supplierModel.dart';
 import 'package:pos_frontend/models/chartModel/chartEntity.dart';
 import 'package:pos_frontend/models/customerModel/customerEntity.dart';
 import 'package:pos_frontend/models/loginModel/loginEntity.dart';
 import 'package:pos_frontend/models/salesModel/salesModel.dart';
+import 'package:pos_frontend/models/salesModel/salesSummary.dart';
 import 'package:pos_frontend/models/signupModel/signupEntity.dart';
 import 'package:pos_frontend/models/dashboardModel/dashboardEntity.dart';
 import 'package:pos_frontend/models/categoryModel/categoryEntity.dart';
 import 'package:pos_frontend/models/inventoryModel/inventoryEntity.dart';
-import 'package:pos_frontend/models/invoiceModel/invoiceEntity.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -27,7 +28,7 @@ class ApiService {
   // static const String baseUrl = 'http://127.0.0.1:8000';
 
   // If using physical device
-  // static const String baseUrl = 'http://192.168.50.186:8000';
+  // static const String baseUrl = 'http://192.168.50.66:8000';
 
   String? _accessToken; // Add this to store the token
   String? _userName; // Add this
@@ -122,12 +123,36 @@ class ApiService {
     }
   }
 
-  Future<http.Response> getUserProfile() async {
-    final url = Uri.parse('$baseUrl/auth/profile');
+  // Future<http.Response> getUserProfile() async {
+  //   final url = Uri.parse('$baseUrl/auth/profile');
 
+  //   try {
+  //     if (_accessToken == null) {
+  //       throw Exception('No access token available');
+  //     }
+
+  //     final response = await http.get(
+  //       url,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $_accessToken',
+  //       },
+  //     );
+  //     print('-----Profile Response status code----${response.statusCode}');
+  //     print('-----Profile Response body----${response.body}');
+  //     return response;
+  //   } catch (e) {
+  //     print('-----Error fetching profile----');
+  //     print('Error details: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  Future<http.Response> getUserProfile() async {
+    final url = Uri.parse('$baseUrl/auth/user');
     try {
       if (_accessToken == null) {
-        throw Exception('No access token available');
+        throw Exception('No access available');
       }
 
       final response = await http.get(
@@ -166,27 +191,33 @@ class ApiService {
     }
   }
 
-  Future<http.Response> logout() async {
-    final url = Uri.parse('$baseUrl/auth/logout');
+  // Future<http.Response> logout() async {
+  //   final url = Uri.parse('$baseUrl/auth/logout');
 
-    try {
-      if (_accessToken == null) {
-        throw Exception('No access token available');
-      }
+  //   try {
+  //     if (_accessToken == null) {
+  //       throw Exception('No access token available');
+  //     }
 
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_accessToken',
-        },
-      );
-      return response;
-    } catch (e) {
-      print('-----Error during logout----');
-      print('Error details: $e');
-      rethrow;
-    }
+  //     final response = await http.post(
+  //       url,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $_accessToken',
+  //       },
+  //     );
+  //     return response;
+  //   } catch (e) {
+  //     print('-----Error during logout----');
+  //     print('Error details: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  void logout() {
+    _accessToken = null; // Clear token
+    _userName = null; // Clear username
+    print('-----User Logged Out Successfully----');
   }
 
   // Protected route API call
@@ -862,27 +893,28 @@ class ApiService {
   }
 
   Future<List<Supplier>> getSuppliers() async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/supplier/suppliers'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $_accessToken',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/supplier/suppliers'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
-      List<Supplier> suppliers = data.map((json) => Supplier.fromJson(json)).toList();
-      return suppliers;
-    } else {
-      throw Exception('Failed to load suppliers: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        List<Supplier> suppliers =
+            data.map((json) => Supplier.fromJson(json)).toList();
+        return suppliers;
+      } else {
+        throw Exception('Failed to load suppliers: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching suppliers: $e');
+      rethrow;
     }
-  } catch (e) {
-    print('Error fetching suppliers: $e');
-    rethrow;
   }
-}
 
   Future<Supplier> createSupplier(Supplier supplier) async {
     try {
@@ -943,6 +975,128 @@ class ApiService {
       }
     } catch (e) {
       print('Error deleting supplier: $e');
+      rethrow;
+    }
+  }
+
+  // Future<List<SalesSummary>> getDailySalesSummary({DateTime? date}) async {
+  //   try {
+  //     final targetDate = date ?? DateTime.now();
+  //     final formattedDate = DateFormat('yyyy-MM-dd').format(targetDate);
+
+  //     final response = await http.get(
+  //       Uri.parse('$baseUrl/sales/daily-summary'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $_accessToken',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       Map<String, dynamic> data = json.decode(response.body);
+  //       List<dynamic> salesData = data['sales_summary'];
+  //       List<SalesSummary> salesSummary =
+  //           salesData.map((json) => SalesSummary.fromJson(json)).toList();
+  //       return salesSummary;
+  //     } else {
+  //       throw Exception('Failed to load daily sales: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching daily sales: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  Future<List<SalesSummary>> getDailySalesSummary() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/sales/daily-summary'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      print('Daily sales response status: ${response.statusCode}');
+      print('Daily sales response body: ${response.body}');
+      print('Request URL: ${Uri.parse('$baseUrl/sales/daily-summary')}');
+      print('Headers: ${{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_accessToken'
+      }}');
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        List<dynamic> salesData = data['sales_summary'];
+        return salesData.map((json) => SalesSummary.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load daily sales: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getDailySalesSummary: $e');
+      rethrow;
+    }
+  }
+
+  // Future<List<SalesSummary>> getMonthlySalesSummary({
+  //   int? year,
+  //   int? month,
+  // }) async {
+  //   try {
+  //     final now = DateTime.now();
+  //     final targetYear = year ?? now.year;
+  //     final targetMonth = month ?? now.month;
+
+  //     final response = await http.get(
+  //       Uri.parse('$baseUrl/sales/monthly-summary'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $_accessToken',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       Map<String, dynamic> data = json.decode(response.body);
+  //       List<dynamic> salesData = data['sales_summary'];
+  //       List<SalesSummary> salesSummary =
+  //           salesData.map((json) => SalesSummary.fromJson(json)).toList();
+  //       return salesSummary;
+  //     } else {
+  //       throw Exception('Failed to load monthly sales: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching monthly sales: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  Future<List<SalesSummary>> getMonthlySalesSummary() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/sales/monthly-summary'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      print('Monthly sales response status: ${response.statusCode}');
+      print('Monthly sales response body: ${response.body}');
+      print('Request URL: ${Uri.parse('$baseUrl/sales/monthly-summary')}');
+      print('Headers: ${{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_accessToken'
+      }}');
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        List<dynamic> salesData = data['sales_summary'];
+        return salesData.map((json) => SalesSummary.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load monthly sales: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getMonthlySalesSummary: $e');
       rethrow;
     }
   }

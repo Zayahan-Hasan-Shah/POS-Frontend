@@ -103,8 +103,8 @@ class _SidebarScreenState extends State<SidebarScreen> {
 
           _buildMenuItem(
             icon: Icons.bar_chart,
-            title: 'Reports',
-            onTap: () => Navigator.pushReplacementNamed(context, '/reports'),
+            title: 'Track Sales',
+            onTap: () => Navigator.pushReplacementNamed(context, '/tracksales'),
           ),
 
           _buildMenuItem(
