@@ -324,7 +324,7 @@ class _CartScreenState extends State<CartScreen> {
                         onTap: () => _addToCart(product),
                         child: Container(
                           width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.width / 2,
+                          height: MediaQuery.of(context).size.width/2,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -362,7 +362,7 @@ class _CartScreenState extends State<CartScreen> {
                                         fontSize: 14,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 1),
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -543,6 +543,7 @@ class _CartScreenState extends State<CartScreen> {
                         Container(
                           width: 60,
                           height: 60,
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(8),

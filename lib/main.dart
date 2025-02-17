@@ -28,6 +28,7 @@ import 'package:pos_frontend/screens/customerScreen.dart';
 import 'package:pos_frontend/screens/homeScreen.dart';
 import 'package:pos_frontend/screens/inventoryScreen.dart';
 import 'package:pos_frontend/screens/loginScreen.dart';
+import 'package:pos_frontend/screens/settings.dart';
 import 'package:pos_frontend/screens/signupScreen.dart';
 import 'package:pos_frontend/screens/splashScreen.dart';
 import 'package:pos_frontend/screens/supplierScreen.dart';
@@ -76,14 +77,16 @@ class MyApp extends StatelessWidget {
           '/dashboard': (context) => HomeScreen(apiService: apiService),
           '/categories': (context) => CategoryScreen(apiService: apiService),
           '/inventory': (context) => InventoryScreen(apiService: apiService),
-          '/tracksales' : (context) => TrackSalesScreen(apiService: apiService,),
+          '/alerts': (context) => AlertScreen(apiService: apiService),
+          '/tracksales': (context) => TrackSalesScreen(
+                apiService: apiService,
+              ),
           '/addproductstocart': (context) => CartScreen(apiService: apiService),
           '/customers': (context) => CustomerScreen(apiService: apiService),
           '/suppliers': (context) => SupplierScreen(apiService: apiService),
-          '/settings': (context) => HomeScreen(apiService: apiService),
+          '/settings': (context) => SettingsScreen(apiService: apiService),
         },
       ),
     );
   }
 }
-

@@ -61,7 +61,8 @@ class _AlertScreenState extends State<AlertScreen> {
             itemBuilder: (context, index) {
               final product = snapshot.data![index];
               return Card(
-                elevation: 2,
+                color: _getStockLevelColor(product.quantity).withOpacity(0.6),
+                elevation: 0,
                 margin: EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   leading: Container(

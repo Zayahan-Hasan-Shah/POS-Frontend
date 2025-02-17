@@ -1,352 +1,8 @@
-// import 'package:flutter/material.dart';
-// import 'package:pos_frontend/models/cartModel/cartItem.dart';
-// import 'package:pos_frontend/models/salesModel/salesModel.dart';
-// import 'package:pos_frontend/screens/invoiceScreen.dart';
-// import 'package:pos_frontend/services/apiService.dart';
-
-// class PaymentScreen extends StatefulWidget {
-//   final List<CartItem> cartItems;
-//   final double total;
-//   final ApiService apiService;
-
-//   const PaymentScreen({
-//     Key? key,
-//     required this.cartItems,
-//     required this.total,
-//     required this.apiService,
-//   }) : super(key: key);
-
-//   @override
-//   State<PaymentScreen> createState() => _PaymentScreenState();
-// }
-
-// class _PaymentScreenState extends State<PaymentScreen> {
-//   String? _selectedPaymentMethod;
-//   String? _selectedOnlineMethod;
-//   final TextEditingController _numberController = TextEditingController();
-
-//   void _showNumberDialog() {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: const Text('Enter Customer Number'),
-//           content: TextField(
-//             controller: _numberController,
-//             keyboardType: TextInputType.phone,
-//             decoration: const InputDecoration(
-//               hintText: 'Enter phone number',
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancel'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 // Save the customer's number and navigate to the invoice screen
-//                 final String number = _numberController.text;
-//                 Navigator.pop(context);
-//                 Navigator.pushAndRemoveUntil(
-//                   context,
-//                   MaterialPageRoute(
-//                     builder: (context) => InvoiceScreen(
-//                       cartItems: widget.cartItems,
-//                       total: widget.total,
-//                       paymentMethod: _selectedPaymentMethod ?? 'Cash',
-//                       customerNumber: number,
-//                     ),
-//                   ),
-//                   (route) => false,
-//                 );
-//               },
-//               child: const Text('OK'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   void _showOnlinePaymentMethods() {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: const Text('Select Payment Method'),
-//           content: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               ListTile(
-//                 leading: Image.asset(
-//                   'lib/assets/images/jazzcash.png',
-//                   width: 40,
-//                   height: 40,
-//                   errorBuilder: (context, error, stackTrace) =>
-//                       const Icon(Icons.payment, size: 40),
-//                 ),
-//                 title: const Text('JazzCash'),
-//                 onTap: () {
-//                   setState(() {
-//                     _selectedPaymentMethod = 'online';
-//                     _selectedOnlineMethod = 'JazzCash';
-//                   });
-//                   Navigator.pop(context);
-//                   _showNumberDialog();
-//                 },
-//               ),
-//               ListTile(
-//                 leading: Image.asset(
-//                   'lib/assets/images/easypaisa.png',
-//                   width: 40,
-//                   height: 40,
-//                   errorBuilder: (context, error, stackTrace) =>
-//                       const Icon(Icons.payment, size: 40),
-//                 ),
-//                 title: const Text('EasyPaisa'),
-//                 onTap: () {
-//                   setState(() {
-//                     _selectedPaymentMethod = 'online';
-//                     _selectedOnlineMethod = 'EasyPaisa';
-//                   });
-//                   Navigator.pop(context);
-//                 },
-//               ),
-//             ],
-//           ),
-//         );
-//       },
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Payment'),
-//         // elevation: 0,
-//       ),
-//       body: Column(
-//         children: [
-//           // Order Summary Section
-//           Expanded(
-//             child: SingleChildScrollView(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Container(
-//                     padding: const EdgeInsets.all(16),
-//                     color: Colors.white,
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         const Text(
-//                           'Order Summary',
-//                           style: TextStyle(
-//                             fontSize: 20,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                         const SizedBox(height: 16),
-//                         // List of cart items
-//                         ListView.builder(
-//                           shrinkWrap: true,
-//                           physics: const NeverScrollableScrollPhysics(),
-//                           itemCount: widget.cartItems.length,
-//                           itemBuilder: (context, index) {
-//                             final item = widget.cartItems[index];
-//                             return CartItemTile(item: item);
-//                           },
-//                         ),
-//                         const SizedBox(height: 16),
-//                         Row(
-//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                           children: [
-//                             const Text(
-//                               'Total Amount',
-//                               style: TextStyle(
-//                                 fontSize: 18,
-//                                 fontWeight: FontWeight.bold,
-//                               ),
-//                             ),
-//                             Text(
-//                               'Rs.${widget.total.toStringAsFixed(2)}',
-//                               style: TextStyle(
-//                                 fontSize: 18,
-//                                 fontWeight: FontWeight.bold,
-//                                 color: Theme.of(context).primaryColor,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   const SizedBox(height: 16),
-//                   // Payment Methods Section
-//                   Container(
-//                     padding: const EdgeInsets.all(16),
-//                     color: Colors.white,
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         const Text(
-//                           'Payment Method',
-//                           style: TextStyle(
-//                             fontSize: 20,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                         const SizedBox(height: 16),
-//                         // Cash Option
-//                         PaymentMethodCard(
-//                           title: 'Cash Payment',
-//                           icon: Icons.money,
-//                           isSelected: _selectedPaymentMethod == 'cash',
-//                           onTap: () {
-//                             setState(() {
-//                               _selectedPaymentMethod = 'cash';
-//                             });
-//                           },
-//                         ),
-//                         const SizedBox(height: 12),
-//                         // Online Option
-//                         PaymentMethodCard(
-//                           title: _selectedOnlineMethod ?? 'Online Payment',
-//                           icon: Icons.payment,
-//                           isSelected: _selectedPaymentMethod == 'online',
-//                           onTap: () {
-//                             _showOnlinePaymentMethods();
-//                           },
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//           // Bottom Payment Button
-//           Container(
-//             padding: const EdgeInsets.all(16),
-//             width: double.infinity,
-//             child: FloatingActionButton.extended(
-//               onPressed: _selectedPaymentMethod == null
-//                   ? null
-//                   : () async {
-//                       try {
-//                         // Update inventory for each item
-//                         for (var item in widget.cartItems) {
-//                           await widget.apiService.updateProduct(
-//                             item.product.id!,
-//                             item.product.name,
-//                             item.product.price,
-//                             item.product.cost_price,
-//                             item.product.quantity - item.quantity,
-//                             item.product.categoryId!,
-//                           );
-//                         }
-
-//                         // Add sales to the database
-//                         for (var item in widget.cartItems) {
-//                           await widget.apiService.addSales(
-//                             SalesEntity(
-//                               product_id: item.product.id,
-//                               quantity: item.quantity,
-//                               total_price: item.product.price * item.quantity,
-//                               payment_method: _selectedPaymentMethod ?? 'Cash',
-//                             ),
-//                           );
-//                         }
-
-//                         // Navigate to invoice and clear previous screens
-//                         Navigator.pushAndRemoveUntil(
-//                           context,
-//                           MaterialPageRoute(
-//                             builder: (context) => InvoiceScreen(
-//                               cartItems: widget.cartItems,
-//                               total: widget.total,
-//                               paymentMethod: _selectedPaymentMethod ?? 'Cash',
-//                               customerNumber: _numberController.text,
-//                             ),
-//                           ),
-//                           (route) =>
-//                               false, // This will clear all previous routes
-//                         );
-//                       } catch (e) {
-//                         ScaffoldMessenger.of(context).showSnackBar(
-//                           SnackBar(
-//                               content: Text('Error processing payment: $e')),
-//                         );
-//                       }
-//                     },
-//               label: const Text(
-//                 'Pay Now',
-//                 style: TextStyle(fontSize: 24),
-//               ),
-//               icon: const Icon(
-//                 Icons.payment,
-//                 size: 32,
-//               ),
-//               backgroundColor: Theme.of(context).primaryColor,
-//               foregroundColor: Colors.white,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class CartItemTile extends StatelessWidget {
-//   final CartItem item;
-
-//   const CartItemTile({Key? key, required this.item}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(vertical: 8),
-//       decoration: BoxDecoration(
-//         border: Border(
-//           bottom: BorderSide(
-//             color: Colors.grey[200]!,
-//             width: 1,
-//           ),
-//         ),
-//       ),
-//       child: Row(
-//         children: [
-//           Expanded(
-//             flex: 2,
-//             child: Text(item.product.name),
-//           ),
-//           Expanded(
-//             child: Text(
-//               '${item.quantity}x',
-//               textAlign: TextAlign.center,
-//             ),
-//           ),
-//           Expanded(
-//             child: Text(
-//               '\$${(item.product.price * item.quantity).toStringAsFixed(2)}',
-//               textAlign: TextAlign.right,
-//               style: const TextStyle(fontWeight: FontWeight.bold),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_frontend/blocs/customerBloc/customer_bloc.dart';
 import 'package:pos_frontend/models/cartModel/cartItem.dart';
+import 'package:pos_frontend/models/invoiceModel/invoiceEntity.dart';
 import 'package:pos_frontend/models/salesModel/salesModel.dart';
 import 'package:pos_frontend/screens/invoiceScreen.dart';
 import 'package:pos_frontend/services/apiService.dart';
@@ -523,63 +179,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  // void _showNumberDialog() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Enter Customer Number'),
-  //         content: Column(
-  //           children: [
-  //             TextField(
-  //               controller: _numberController,
-  //               keyboardType: TextInputType.phone,
-  //               decoration: const InputDecoration(
-  //                 hintText: 'Enter phone number',
-  //               ),
-  //             ),
-  //             TextField(
-  //               controller: _nameCustomerController,
-  //               keyboardType: TextInputType.phone,
-  //               decoration: const InputDecoration(
-  //                 hintText: 'Enter name',
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(context);
-  //             },
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               // Save the customer's number and navigate to the invoice screen
-  //               final String number = _numberController.text;
-  //               Navigator.pop(context);
-  //               Navigator.pushAndRemoveUntil(
-  //                 context,
-  //                 MaterialPageRoute(
-  //                   builder: (context) => InvoiceScreen(
-  //                     cartItems: widget.cartItems,
-  //                     total: widget.total,
-  //                     paymentMethod: _selectedPaymentMethod ?? 'Cash',
-  //                     customerNumber: number, customer: _nameCustomerController,
-  //                   ),
-  //                 ),
-  //                 (route) => false,
-  //               );
-  //             },
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   void _showNumberDialog() {
     showDialog(
       context: context,
@@ -604,23 +203,85 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     child: const Text('Cancel'),
                   ),
                   TextButton(
-                    onPressed: () {
-                      final String number = _numberController.text;
-                      Navigator.pop(context);
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => InvoiceScreen(
-                            cartItems: widget.cartItems,
-                            total: widget.total,
-                            paymentMethod: _selectedPaymentMethod ?? 'Cash',
-                            customerNumber: number,
-                            customer: state
-                                .selectedCustomer!, // Pass the actual Customer object
+                    onPressed: () async {
+                      try {
+                        // Create invoice items from cart items
+                        final invoiceItems = widget.cartItems
+                            .map((item) => InvoiceItem(
+                                  productName: item.product.name,
+                                  quantity: item.quantity,
+                                  unitPrice: item.product.price,
+                                  totalPrice:
+                                      item.product.price * item.quantity,
+                                ))
+                            .toList();
+
+                        // Create invoice
+                        final invoice = InvoiceEntity(
+                          customerName: state.selectedCustomer!.name,
+                          customerPhone: state.selectedCustomer!.phone,
+                          items: invoiceItems,
+                          totalAmount: widget.total,
+                          invoiceNumber: '',
+                        );
+
+                        // Save invoice
+                        final createdInvoice =
+                            await widget.apiService.createInvoice(invoice);
+
+                        // Update inventory for each item
+                        for (var item in widget.cartItems) {
+                          await widget.apiService.updateProduct(
+                            item.product.id!,
+                            item.product.name,
+                            item.product.price,
+                            item.product.cost_price,
+                            item.product.quantity - item.quantity,
+                            item.product.categoryId!,
+                          );
+                        }
+
+                        // Add sales to the database
+                        for (var item in widget.cartItems) {
+                          await widget.apiService.addSales(
+                            SalesEntity(
+                              product_id: item.product.id,
+                              quantity: item.quantity,
+                              total_price: item.product.price * item.quantity,
+                              payment_method: _selectedPaymentMethod ?? 'Cash',
+                            ),
+                          );
+                        }
+
+                        Navigator.pop(context); // Close the dialog
+                        if (!context.mounted) return;
+
+                        // Navigate to invoice screen
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InvoiceScreen(
+                              invoice: createdInvoice,
+                              cartItems: widget.cartItems,
+                              total: widget.total,
+                              paymentMethod: _selectedPaymentMethod ?? 'Cash',
+                              customer: state.selectedCustomer!,
+                              customerNumber: '123123123123',
+                            ),
                           ),
-                        ),
-                        (route) => false,
-                      );
+                          (route) => false,
+                        );
+                      } catch (e) {
+                        Navigator.pop(context); // Close the dialog
+                        if (!context.mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error processing payment: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                     child: const Text('OK'),
                   ),
@@ -687,6 +348,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final String invoiceNumber = 'INV-${now.millisecondsSinceEpoch}';
     return Scaffold(
       appBar: AppBar(title: const Text('Payment')),
       body: BlocBuilder<CustomerBloc, CustomerState>(
@@ -863,6 +526,30 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ? null
                         : () async {
                             try {
+                              // Create invoice items from cart items
+                              final invoiceItems = widget.cartItems
+                                  .map((item) => InvoiceItem(
+                                        productName: item.product.name,
+                                        quantity: item.quantity,
+                                        unitPrice: item.product.price,
+                                        totalPrice:
+                                            item.product.price * item.quantity,
+                                      ))
+                                  .toList();
+
+                              // Create invoice
+                              final invoice = InvoiceEntity(
+                                items: invoiceItems,
+                                totalAmount: widget.total,
+                                customerName: state.selectedCustomer!.name,
+                                customerPhone: state.selectedCustomer!.phone,
+                                invoiceNumber: invoiceNumber,
+                              );
+
+                              // Save invoice
+                              final createdInvoice = await widget.apiService
+                                  .createInvoice(invoice);
+
                               // Update inventory for each item
                               for (var item in widget.cartItems) {
                                 await widget.apiService.updateProduct(
@@ -889,12 +576,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 );
                               }
 
-                              // Navigate to invoice
+                              // Navigate to invoice screen
                               if (!mounted) return;
+                              Navigator.pop(context);
+
+                              // Navigate to invoice screen
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => InvoiceScreen(
+                                    invoice: createdInvoice,
                                     cartItems: widget.cartItems,
                                     total: widget.total,
                                     paymentMethod:
@@ -910,10 +601,69 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Error processing payment: $e'),
+                                  backgroundColor: Colors.red,
                                 ),
                               );
                             }
+                            ;
                           },
+                    // onPressed: (_selectedPaymentMethod == null ||
+                    //         state.selectedCustomer == null)
+                    //     ? null
+                    //     : () async {
+                    //         try {
+                    //           // Update inventory for each item
+                    //           for (var item in widget.cartItems) {
+                    //             await widget.apiService.updateProduct(
+                    //               item.product.id!,
+                    //               item.product.name,
+                    //               item.product.price,
+                    //               item.product.cost_price,
+                    //               item.product.quantity - item.quantity,
+                    //               item.product.categoryId!,
+                    //             );
+                    //           }
+
+                    //           // Add sales to the database
+                    //           for (var item in widget.cartItems) {
+                    //             await widget.apiService.addSales(
+                    //               SalesEntity(
+                    //                 product_id: item.product.id,
+                    //                 quantity: item.quantity,
+                    //                 total_price:
+                    //                     item.product.price * item.quantity,
+                    //                 payment_method:
+                    //                     _selectedPaymentMethod ?? 'Cash',
+                    //               ),
+                    //             );
+                    //           }
+
+                    //           // Navigate to invoice
+                    //           if (!mounted) return;
+                    //           Navigator.pushAndRemoveUntil(
+                    //             context,
+                    //             MaterialPageRoute(
+                    //               builder: (context) => InvoiceScreen(
+                    //                 cartItems: widget.cartItems,
+                    //                 total: widget.total,
+                    //                 paymentMethod:
+                    //                     _selectedPaymentMethod ?? 'Cash',
+                    //                 customer: state.selectedCustomer!,
+                    //                 customerNumber:
+                    //                     state.selectedCustomer!.phone,
+                    //               ),
+                    //             ),
+                    //             (route) => false,
+                    //           );
+                    //         } catch (e) {
+                    //           ScaffoldMessenger.of(context).showSnackBar(
+                    //             SnackBar(
+                    //               content: Text('Error processing payment: $e'),
+                    //             ),
+                    //           );
+                    //         }
+                    //       },
+
                     label: const Text(
                       'Pay Now',
                       style: TextStyle(fontSize: 24),
@@ -935,76 +685,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(title: const Text('Payment')),
-  //     body: BlocBuilder<CustomerBloc, CustomerState>(
-  //       builder: (context, state) {
-  //         if (state is CustomerLoaded) {
-  //           return Column(
-  //             children: [
-  //               // ... existing order summary ...
-
-  //               // Customer Information Section
-  //               if (state.selectedCustomer != null)
-  //                 Container(
-  //                   padding: const EdgeInsets.all(16),
-  //                   color: Colors.white,
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       const Text(
-  //                         'Customer Information',
-  //                         style: TextStyle(
-  //                           fontSize: 20,
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 8),
-  //                       Text('Name: ${state.selectedCustomer!.name}'),
-  //                       Text('Phone: ${state.selectedCustomer!.phone}'),
-  //                       Text('Email: ${state.selectedCustomer!.email}'),
-  //                     ],
-  //                   ),
-  //                 ),
-
-  //               // ... payment method widgets ...
-
-  //               // Pay Now Button
-  //               FloatingActionButton.extended(
-  //                 onPressed: (_selectedPaymentMethod == null ||
-  //                         state.selectedCustomer == null)
-  //                     ? null
-  //                     : () async {
-  //                         // ... payment processing ...
-  //                         Navigator.pushAndRemoveUntil(
-  //                           context,
-  //                           MaterialPageRoute(
-  //                             builder: (context) => InvoiceScreen(
-  //                               cartItems: widget.cartItems,
-  //                               total: widget.total,
-  //                               paymentMethod: _selectedPaymentMethod ?? 'Cash',
-  //                               customer: state.selectedCustomer!,
-  //                               customerNumber: '',
-  //                             ),
-  //                           ),
-  //                           (route) => false,
-  //                         );
-  //                       },
-  //                 label: const Text('Pay Now'),
-  //                 icon: const Icon(Icons.payment),
-  //               ),
-  //             ],
-  //           );
-  //         }
-
-  //         return const Center(child: CircularProgressIndicator());
-  //       },
-  //     ),
-  //   );
-  // }
 }
 
 class PaymentMethodCard extends StatelessWidget {

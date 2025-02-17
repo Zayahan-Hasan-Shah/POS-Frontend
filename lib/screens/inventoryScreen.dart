@@ -175,6 +175,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         final product = products[index];
         return Card(
           elevation: 2,
+          color: Colors.green[400],
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             title: Text(
