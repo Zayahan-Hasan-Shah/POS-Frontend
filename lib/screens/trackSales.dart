@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -143,13 +145,15 @@ class _TrackSalesScreenState extends State<TrackSalesScreen>
                   return Padding(
                     padding: const EdgeInsets.all(2),
                     child: SizedBox(
-                      width: 30 ,
-                      child: Text(
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        salesData[value.toInt()].productName.split(' ')[0],
-                        style: TextStyle(
-                          fontSize: 14,
+                      width: 30,
+                      child: Transform.rotate(
+                        angle:
+                            -0.5, // Rotate text (negative for left tilt, positive for right)
+                        child: Text(
+                          salesData[value.toInt()].productName.split(' ')[0],
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(fontSize: 12),
                         ),
                       ),
                     ),
@@ -159,6 +163,7 @@ class _TrackSalesScreenState extends State<TrackSalesScreen>
             ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
+                reservedSize: 40,
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
                   return Text('Rs.${value.toInt()}',
@@ -176,8 +181,8 @@ class _TrackSalesScreenState extends State<TrackSalesScreen>
                 BarChartRodData(
                   gradient: LinearGradient(colors: [
                     Theme.of(context).primaryColor.withOpacity(0.8),
-                    Colors.black26,
-                  ]),
+                    Colors.pinkAccent
+                  ], transform: const GradientRotation(pi / 40)),
                   toY: entry.value.totalRevenue,
                   color: Theme.of(context).primaryColor,
                   width: 20,
@@ -206,12 +211,79 @@ class _TrackSalesScreenState extends State<TrackSalesScreen>
           rows: salesData.map((sale) {
             return DataRow(
               color: MaterialStateProperty.all(
-                  Theme.of(context).primaryColor.withOpacity(0.4)),
+                  Colors.transparent), // Make row transparent
               cells: [
-                DataCell(Text(sale.productName)),
-                DataCell(Text(sale.totalQuantity.toString())),
-                DataCell(Text('Rs.${sale.totalRevenue.toStringAsFixed(2)}')),
-                if (_tabController.index == 1) DataCell(Text(sale.date ?? '')),
+                DataCell(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8, horizontal: 12), // Adjust spacing
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor.withOpacity(0.8),
+                          Colors.pinkAccent,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(
+                          5), // Optional for rounded corners
+                    ),
+                    child: Text(sale.productName,
+                        style: TextStyle(
+                            color: Colors.white)), // Ensure text visibility
+                  ),
+                ),
+                DataCell(
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor.withOpacity(0.8),
+                          Colors.pinkAccent,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(sale.totalQuantity.toString(),
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                DataCell(
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor.withOpacity(0.8),
+                          Colors.pinkAccent,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text('Rs.${sale.totalRevenue.toStringAsFixed(2)}',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                if (_tabController.index == 1)
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).primaryColor.withOpacity(0.8),
+                            Colors.pinkAccent,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(sale.date ?? '',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
               ],
             );
           }).toList(),

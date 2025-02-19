@@ -568,61 +568,83 @@ class CustomerScreenState extends State<CustomerScreen> {
                   itemBuilder: (context, index) {
                     final customer = customers[index];
                     return Card(
-                      color: Theme.of(context).primaryColor.withOpacity(0.4),
-                        shadowColor: Colors.black26,
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
-                      child: ListTile(
-                        title: Text(
-                          customer.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.email, size: 16),
-                                const SizedBox(width: 8),
-                                Text(customer.email),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.phone, size: 16),
-                                const SizedBox(width: 8),
-                                Text(customer.phone),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    size: 16), // Fixed: Icon name
-                                const SizedBox(width: 8),
-                                Expanded(child: Text(customer.address)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () =>
-                                  showCustomerForm(customer: customer),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => confirmDelete(customer),
-                              color: Colors.red,
-                            ),
-                          ],
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            gradient: LinearGradient(colors: [
+                              Theme.of(context).primaryColor.withOpacity(0.8),
+                              Colors.pinkAccent
+                            ])),
+                        child: ListTile(
+                          title: Text(
+                            customer.name,
+                            style: const TextStyle(
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.email,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(customer.email),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.phone,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(customer.phone),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ), // Fixed: Icon name
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(customer.address)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    showCustomerForm(customer: customer),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => confirmDelete(customer),
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

@@ -24,13 +24,14 @@ class ApiService {
 
   // If using Android Emulator
   // static const String baseUrl =
-  //     'http://10.0.2.2:8000'; // This maps to 127.0.0.1 on your host machine
+  //     'http://10.0.2.2:8080'; // This maps to 127.0.0.1 on your host machine
 
   // If using iOS Simulator
   // static const String baseUrl = 'http://127.0.0.1:8000';
 
   // If using physical device
   static const String baseUrl = 'http://192.168.50.216:8080';
+  // static const String baseUrl = 'http://192.168.43.148:8080';
 
   String? _accessToken; // Add this to store the token
   String? _userName; // Add this

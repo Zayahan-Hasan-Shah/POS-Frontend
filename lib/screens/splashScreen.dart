@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'P2P & POS',
+                      'POS',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,

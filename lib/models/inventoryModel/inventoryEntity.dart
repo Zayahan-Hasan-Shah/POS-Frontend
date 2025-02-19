@@ -34,3 +34,5 @@ class InventoryEntity {
     return 'InventoryEntity(id: $id, name: $name, price: $price, quantity: $quantity, categoryId: $categoryId, categoryName: $categoryName)';
   }
 }
+
+

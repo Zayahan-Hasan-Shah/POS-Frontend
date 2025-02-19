@@ -36,6 +36,7 @@ import 'package:pos_frontend/screens/trackSales.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/blocs/loginBloc/login_bloc.dart';
 import 'package:pos_frontend/screens/categoryScreen.dart';
+import 'package:pos_frontend/blocs/cartBloc/cart_bloc.dart';
 
 void main() {
   final apiService = ApiService(); // Create single instance
@@ -66,6 +67,9 @@ class MyApp extends StatelessWidget {
           create: (context) => SupplierBloc(
             apiService: ApiService(),
           ),
+        ),
+        BlocProvider(
+          create: (context) => CartBloc(),
         ),
       ],
       child: MaterialApp(

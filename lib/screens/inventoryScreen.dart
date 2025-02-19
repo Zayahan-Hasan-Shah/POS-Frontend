@@ -7,6 +7,9 @@ import 'package:pos_frontend/models/inventoryModel/inventoryEntity.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/widgets/app_drawer.dart';
 import 'package:pos_frontend/models/categoryModel/categoryEntity.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class InventoryScreen extends StatefulWidget {
   final ApiService apiService;
@@ -18,10 +21,6 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  // late final InventoryBloc _inventoryBloc;
-  // List<InventoryEntity> _filteredProducts = [];
-  // List<InventoryEntity> _products = [];
-  // final TextEditingController _searchController = TextEditingController();
   late final InventoryBloc _inventoryBloc;
   List<InventoryEntity> _filteredProducts = [];
   List<InventoryEntity> _products = [];
@@ -82,6 +81,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
           appBar: AppBar(
             title: const Text('Inventory'),
             actions: [
+              // Add scan button
+              IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: () => _scanBarcode(context),
+              ),
               // Add PopupMenuButton for sorting
               PopupMenuButton<String>(
                 icon: const Icon(Icons.filter_list),
@@ -123,7 +127,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: () => _showAddProductDialog(context),
+                onPressed: () => _showAddProductDialog(context, barcode: ''),
               ),
             ],
           ),
@@ -174,44 +178,52 @@ class _InventoryScreenState extends State<InventoryScreen> {
       itemBuilder: (context, index) {
         final product = products[index];
         return Card(
-          elevation: 2,
-          color: Colors.green[400],
+          elevation: 0,
+          // color: Colors.green[400],
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            title: Text(
-              product.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(colors: [
+                  Theme.of(context).primaryColor.withOpacity(0.8),
+                  Colors.pinkAccent
+                ])),
+            child: ListTile(
+              title: Text(
+                product.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Price: Rs.${product.price.toStringAsFixed(2)}'),
-                Text('Quantity: ${product.quantity}'),
-                if (product.categoryName != null)
-                  Text('Category: ${product.categoryName}'),
-              ],
-            ),
-            trailing: PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Text('Edit'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete'),
-                ),
-              ],
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showEditProductDialog(context, product);
-                } else if (value == 'delete') {
-                  _showDeleteConfirmation(context, product);
-                }
-              },
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Price: Rs.${product.price.toStringAsFixed(2)}'),
+                  Text('Quantity: ${product.quantity}'),
+                  if (product.categoryName != null)
+                    Text('Category: ${product.categoryName}'),
+                ],
+              ),
+              trailing: PopupMenuButton(
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showEditProductDialog(context, product);
+                  } else if (value == 'delete') {
+                    _showDeleteConfirmation(context, product);
+                  }
+                },
+              ),
             ),
           ),
         );
@@ -219,9 +231,222 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  void _showAddProductDialog(BuildContext parentContext) {
-    final nameController = TextEditingController();
-    final priceController = TextEditingController();
+  Future<void> _scanBarcode(BuildContext context) async {
+    MobileScannerController cameraController = MobileScannerController();
+    String? scannedCode;
+
+    try {
+      print('Starting barcode scanner...');
+      scannedCode = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: const Text('Scan Barcode'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  cameraController.dispose();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            body: MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes[0].rawValue != null) {
+                  print('Successfully scanned barcode: ${barcodes[0].rawValue}');
+                  Navigator.pop(context, barcodes[0].rawValue);
+                }
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (scannedCode != null && mounted) {
+        // Check if we have saved data for this barcode
+        final savedProduct = await _getProductByBarcode(scannedCode);
+        
+        if (savedProduct != null) {
+          if (mounted) {
+            _showAddProductDialog(
+              context,
+              barcode: scannedCode,
+              prefillName: savedProduct['name'],
+              prefillPrice: savedProduct['price'].toDouble(),
+              prefillCategory: null,
+            );
+          }
+        } else {
+          // Show dialog to enter new product details
+          if (mounted) {
+            final result = await showDialog<Map<String, dynamic>>(
+              context: context,
+              builder: (BuildContext context) {
+                final nameController = TextEditingController();
+                final priceController = TextEditingController();
+
+                return AlertDialog(
+                  title: Text('Barcode: $scannedCode'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(labelText: 'Product Name'),
+                        autofocus: true,
+                      ),
+                      TextField(
+                        controller: priceController,
+                        decoration: const InputDecoration(labelText: 'Price'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, {
+                          'name': nameController.text,
+                          'price': double.tryParse(priceController.text) ?? 0.0,
+                        });
+                      },
+                      child: const Text('Save & Add'),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (result != null && mounted) {
+              // Save the product data
+              await _saveProductBarcode(
+                scannedCode,
+                result['name'],
+                result['price'],
+              );
+
+              // Show add product dialog
+              _showAddProductDialog(
+                context,
+                barcode: scannedCode,
+                prefillName: result['name'],
+                prefillPrice: result['price'],
+                prefillCategory: null,
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error during scanning: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error scanning: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (cameraController.isStarting) {
+        await cameraController.stop();
+      }
+      cameraController.dispose();
+    }
+  }
+
+  Future<void> _saveProductBarcode(String barcode, String name, double price) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final productData = json.encode({
+        'name': name,
+        'price': price,
+      });
+      await prefs.setString('barcode_$barcode', productData);
+      print('Saved product data for barcode: $barcode');
+    } catch (e) {
+      print('Error saving product data: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>?> _getProductByBarcode(String barcode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final productData = prefs.getString('barcode_$barcode');
+      if (productData != null) {
+        return json.decode(productData);
+      }
+      return null;
+    } catch (e) {
+      print('Error retrieving product data: $e');
+      return null;
+    }
+  }
+
+  void _showProductSelectionDialog(BuildContext context, String barcode) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Product'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _products.length,
+              itemBuilder: (context, index) {
+                final product = _products[index];
+                return ListTile(
+                  title: Text(product.name),
+                  subtitle: Text('Price: ${product.price}'),
+                  onTap: () {
+                    Navigator.pop(context); // Close selection dialog
+                    _showAddProductDialog(
+                      context,
+                      barcode: barcode,
+                      prefillName: product.name,
+                      prefillPrice: product.price,
+                      prefillCategory: product.categoryId,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showAddProductDialog(context, barcode: barcode);
+              },
+              child: const Text('New Product'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddProductDialog(
+    BuildContext parentContext, {
+    required String barcode,
+    String? prefillName,
+    double? prefillPrice,
+    int? prefillCategory,
+  }) {
+    final nameController = TextEditingController(text: prefillName ?? '');
+    final priceController =
+        TextEditingController(text: prefillPrice?.toStringAsFixed(2) ?? '');
     final costPriceController = TextEditingController();
     final quantityController = TextEditingController();
     CategoryEntity? selectedCategory;
@@ -231,86 +456,102 @@ class _InventoryScreenState extends State<InventoryScreen> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: const Text('Add Product'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Product Name'),
-                autofocus: true,
-              ),
-              TextField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: 'Price'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: costPriceController,
-                decoration: const InputDecoration(labelText: 'Cost Price'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: quantityController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              FutureBuilder<List<CategoryEntity>>(
-                future: widget.apiService.getCategories(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  }
-                  if (snapshot.hasError) {
-                    print('Category loading error: ${snapshot.error}');
-                    return Text('Error: ${snapshot.error}');
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No categories available');
-                  }
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  readOnly: prefillName != null, // Make read-only if pre-filled
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                  readOnly:
+                      prefillPrice != null, // Make read-only if pre-filled
+                ),
+                TextField(
+                  controller: costPriceController,
+                  decoration: const InputDecoration(labelText: 'Cost Price'),
+                  keyboardType: TextInputType.number,
+                  autofocus: true, // Focus here since it needs manual input
+                ),
+                TextField(
+                  controller: quantityController,
+                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                FutureBuilder<List<CategoryEntity>>(
+                  future: widget.apiService.getCategories(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    if (snapshot.hasError) {
+                      print('Category loading error: ${snapshot.error}');
+                      return Text('Error: ${snapshot.error}');
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('No categories available');
+                    }
 
-                  final categories = snapshot.data!;
-                  // Debug prints
-                  print('Categories loaded:');
-                  for (var category in categories) {
-                    print('Category: ${category.name}, ID: ${category.id}');
-                  }
+                    final categories = snapshot.data!;
+                    // Debug prints
+                    print('Categories loaded:');
+                    for (var category in categories) {
+                      print('Category: ${category.name}, ID: ${category.id}');
+                    }
 
-                  // Force initialize selectedCategory if it's null
-                  selectedCategory ??= categories.first;
-                  print(
-                      'Selected category: ${selectedCategory?.name}, ID: ${selectedCategory?.id}');
+                    // Force initialize selectedCategory if it's null
+                    selectedCategory ??= categories.first;
+                    print(
+                        'Selected category: ${selectedCategory?.name}, ID: ${selectedCategory?.id}');
 
-                  return Column(
-                    children: [
-                      DropdownButtonFormField<CategoryEntity>(
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                        ),
-                        value: selectedCategory,
-                        items: categories.map((category) {
-                          return DropdownMenuItem<CategoryEntity>(
-                            value: category,
-                            child: Text(
-                                '${category.name} (ID: ${category.id})'), // Show ID in dropdown
-                          );
-                        }).toList(),
-                        onChanged: (CategoryEntity? value) {
-                          print(
-                              'Category changed to: ${value?.name}, ID: ${value?.id}');
-                          setState(() {
-                            selectedCategory = value;
-                          });
-                        },
+                    // Initialize selected category if prefilled
+                    if (prefillCategory != null && selectedCategory == null) {
+                      selectedCategory = categories.firstWhere(
+                        (cat) => cat.id == prefillCategory,
+                        orElse: () => categories.first,
+                      );
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<CategoryEntity>(
+                            decoration: const InputDecoration(
+                              labelText: 'Category',
+                            ),
+                            value: selectedCategory,
+                            items: categories.map((category) {
+                              return DropdownMenuItem<CategoryEntity>(
+                                value: category,
+                                child: Text(
+                                    '${category.name} (ID: ${category.id})'), // Show ID in dropdown
+                              );
+                            }).toList(),
+                            onChanged: (CategoryEntity? value) {
+                              print(
+                                  'Category changed to: ${value?.name}, ID: ${value?.id}');
+                              setState(() {
+                                selectedCategory = value;
+                              });
+                            },
+                          ),
+                          // Debug text to show current selection
+                          Text(
+                              'Current selection: ${selectedCategory?.name ?? "none"} (ID: ${selectedCategory?.id})')
+                        ],
                       ),
-                      // Debug text to show current selection
-                      Text(
-                          'Current selection: ${selectedCategory?.name ?? "none"} (ID: ${selectedCategory?.id})')
-                    ],
-                  );
-                },
-              ),
-            ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

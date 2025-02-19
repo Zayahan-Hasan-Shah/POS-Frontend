@@ -3,24 +3,24 @@ import 'package:pos_frontend/models/inventoryModel/inventoryEntity.dart';
 import 'package:pos_frontend/services/apiService.dart';
 import 'package:pos_frontend/widgets/app_drawer.dart';
 import 'package:pos_frontend/screens/paymentScreen.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:pos_frontend/models/cartModel/cartItem.dart';
 
 class CartScreen extends StatefulWidget {
   final ApiService apiService;
 
-  const CartScreen({
-    Key? key,
-    required this.apiService,
-  }) : super(key: key);
+  const CartScreen({super.key, required this.apiService});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final List<CartItem> cartItems = [];
-  double _total = 0.0;
   List<InventoryEntity> _products = [];
+  Map<InventoryEntity, int> cart = {};
+  double total = 0;
   List<InventoryEntity> _filteredProducts = [];
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
@@ -28,13 +28,27 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProducts();
+    _loadInventory();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInventory() async {
+    try {
+      final products = await widget.apiService.getInventory();
+      setState(() {
+        _products = products;
+        _filteredProducts = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading inventory: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   void _filterProducts(String query) {
@@ -67,154 +81,56 @@ class _CartScreenState extends State<CartScreen> {
 
   void _updateTotal() {
     setState(() {
-      _total = cartItems.fold(
-          0, (sum, item) => sum + (item.product.price * item.quantity));
+      total = cart.entries.fold(
+        0,
+        (sum, item) => sum + (item.key.price * item.value),
+      );
     });
   }
 
-  // void _addToCart(InventoryEntity product) {
-  //   print('Attempting to add product to cart: ${product.name}');
+  void _addToCart(InventoryEntity product, int quantity) {
+    setState(() {
+      if (cart.containsKey(product)) {
+        cart[product] = cart[product]! + quantity;
+      } else {
+        cart[product] = quantity;
+      }
+      _updateTotal();
+    });
+  }
 
-  //   setState(() {
-  //     final existingItemIndex =
-  //         cartItems.indexWhere((item) => item.product.id == product.id);
-  //     print('Existing item index: $existingItemIndex');
-
-  //     if (existingItemIndex != -1) {
-  //       print('Updating existing item quantity');
-  //       cartItems[existingItemIndex].quantity++;
-  //     } else {
-  //       print('Adding new item to cart');
-  //       cartItems.add(CartItem(product: product, quantity: 1));
-  //     }
-
-  //     print('Cart items count: ${cartItems.length}');
-  //     _updateTotal();
-
-  //     // Show snackbar from top
-  //     ScaffoldMessenger.of(context)
-  //       ..clearSnackBars()
-  //       ..showSnackBar(
-  //         SnackBar(
-  //           content: Text('${product.name} added to cart'),
-  //           duration: const Duration(seconds: 1),
-  //           behavior: SnackBarBehavior.floating, // Makes it float
-  //           margin: EdgeInsets.only(
-  //             bottom: MediaQuery.of(context).size.height - 100,
-  //             right: 20,
-  //             left: 20,
-  //           ),
-  //         ),
-  //       );
-  //   });
-  // }
-
-  void _addToCart(InventoryEntity product) {
-    print('Attempting to add product to cart: ${product.name}');
-
-    // Check if adding one more item would exceed available stock
-    final existingItemIndex =
-        cartItems.indexWhere((item) => item.product.id == product.id);
-    int currentQuantityInCart =
-        existingItemIndex != -1 ? cartItems[existingItemIndex].quantity : 0;
-
-    if (currentQuantityInCart + 1 > product.quantity) {
+  void _updateQuantity(InventoryEntity product, int newQuantity) {
+    if (newQuantity > product.quantity) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Not enough stock for ${product.name}'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height - 100,
-            right: 20,
-            left: 20,
-          ),
         ),
       );
       return;
     }
 
     setState(() {
-      if (existingItemIndex != -1) {
-        print('Updating existing item quantity');
-        cartItems[existingItemIndex].quantity++;
+      if (newQuantity > 0) {
+        cart[product] = newQuantity;
       } else {
-        print('Adding new item to cart');
-        cartItems.add(CartItem(product: product, quantity: 1));
+        cart.remove(product);
       }
-      print('Cart items count: ${cartItems.length}');
       _updateTotal();
-
-      // Show success snackbar
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('${product.name} added to cart'),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.only(
-              bottom: MediaQuery.of(context).size.height - 100,
-              right: 20,
-              left: 20,
-            ),
-          ),
-        );
     });
   }
 
-  // void _removeFromCart(CartItem item) {
-  //   setState(() {
-  //     cartItems.remove(item);
-  //     _updateTotal();
-  //   });
-  // }
-
-  // void _updateQuantity(CartItem item, int newQuantity) {
-  //   if (newQuantity > 0) {
-  //     setState(() {
-  //       item.quantity = newQuantity;
-  //       _updateTotal();
-  //     });
-  //   } else {
-  //     _removeFromCart(item);
-  //   }
-  // }
-
-  void _updateQuantity(CartItem item, int newQuantity) {
-    // Check if the new quantity exceeds available stock
-    if (newQuantity > item.product.quantity) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Not enough stock for ${item.product.name}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (newQuantity > 0) {
-      setState(() {
-        item.quantity = newQuantity;
-        _updateTotal();
-      });
-    } else {
-      _removeFromCart(item);
-    }
-  }
-
-  void _removeFromCart(CartItem item) {
+  void _removeFromCart(InventoryEntity product) {
     setState(() {
-      cartItems.remove(item);
+      cart.remove(product);
       _updateTotal();
 
-      // Show removal notification
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
         ..showSnackBar(
           SnackBar(
-            content: Text('${item.product.name} removed from cart'),
+            content: Text('${product.name} removed from cart'),
             duration: const Duration(seconds: 1),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(
@@ -229,15 +145,26 @@ class _CartScreenState extends State<CartScreen> {
 
   void _checkStock(InventoryEntity product) {
     if (product.quantity <
-        cartItems.fold(0, (sum, item) => sum + item.quantity)) {
+        _filteredProducts.fold(0, (sum, item) => sum + item.quantity)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Not enough stock for ${product.name}')),
       );
     }
   }
 
+  List<CartItem> _getCartItems() {
+    return cart.entries
+        .map((entry) => CartItem(
+              product: entry.key,
+              quantity: entry.value,
+            ))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final cartItems = _getCartItems();
+
     return Scaffold(
       drawer: SidebarScreen(apiService: widget.apiService),
       backgroundColor: Colors.grey[100],
@@ -256,7 +183,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
             Text(
-              '${cartItems.length} items in cart',
+              '${cart.length} items in cart',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,
@@ -276,7 +203,6 @@ class _CartScreenState extends State<CartScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Search Bar
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.all(16),
@@ -307,7 +233,6 @@ class _CartScreenState extends State<CartScreen> {
                     onChanged: _filterProducts,
                   ),
                 ),
-                // Products Grid
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(16),
@@ -321,10 +246,10 @@ class _CartScreenState extends State<CartScreen> {
                     itemBuilder: (context, index) {
                       final product = _filteredProducts[index];
                       return GestureDetector(
-                        onTap: () => _addToCart(product),
+                        onTap: () => _addToCart(product, 1),
                         child: Container(
                           width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.width/2,
+                          height: MediaQuery.of(context).size.width / 2,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -404,7 +329,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ],
             ),
-      bottomSheet: cartItems.isEmpty
+      bottomSheet: cart.isEmpty
           ? null
           : Container(
               decoration: BoxDecoration(
@@ -428,7 +353,7 @@ class _CartScreenState extends State<CartScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${cartItems.length} items',
+                            '${cart.length} items',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -436,7 +361,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Rs.${_total.toStringAsFixed(2)}',
+                            'Rs.${total.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
@@ -474,6 +399,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _showCart(BuildContext context) {
+    final cartItems = _getCartItems();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -510,7 +437,7 @@ class _CartScreenState extends State<CartScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Your Cart (${cartItems.length})',
+                    'Your Cart (${cart.length})',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -582,8 +509,8 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove_circle_outline),
-                              onPressed: () =>
-                                  _updateQuantity(item, item.quantity - 1),
+                              onPressed: () => _updateQuantity(
+                                  item.product, item.quantity - 1),
                             ),
                             Text(
                               '${item.quantity}',
@@ -594,8 +521,8 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline),
-                              onPressed: () =>
-                                  _updateQuantity(item, item.quantity + 1),
+                              onPressed: () => _updateQuantity(
+                                  item.product, item.quantity + 1),
                             ),
                           ],
                         ),
@@ -633,7 +560,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         Text(
-                          'Rs.${_total.toStringAsFixed(2)}',
+                          'Rs.${total.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -674,6 +601,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _showCheckoutConfirmation(BuildContext context) {
+    final cartItems = _getCartItems();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -696,12 +625,12 @@ class _CartScreenState extends State<CartScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Total Items: ${cartItems.length}',
+                'Total Items: ${cart.length}',
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Total Amount: Rs.${_total.toStringAsFixed(2)}',
+                'Total Amount: Rs.${total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -732,7 +661,7 @@ class _CartScreenState extends State<CartScreen> {
                   MaterialPageRoute(
                     builder: (context) => PaymentScreen(
                       cartItems: cartItems,
-                      total: _total,
+                      total: total,
                       apiService: widget.apiService,
                     ),
                   ),
@@ -757,5 +686,168 @@ class _CartScreenState extends State<CartScreen> {
         );
       },
     );
+  }
+
+  Future<void> _scanProductForCart(BuildContext context) async {
+    MobileScannerController cameraController = MobileScannerController();
+    String? scannedCode;
+
+    try {
+      print('Starting barcode scanner...');
+      scannedCode = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: const Text('Scan Product'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  cameraController.dispose();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            body: MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes[0].rawValue != null) {
+                  print(
+                      'Successfully scanned barcode: ${barcodes[0].rawValue}');
+                  Navigator.pop(context, barcodes[0].rawValue);
+                }
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (scannedCode != null && mounted) {
+        final savedProduct = await _getProductByBarcode(scannedCode);
+
+        if (savedProduct != null) {
+          final inventoryProduct = _products.firstWhere(
+            (product) => product.name == savedProduct['name'],
+            orElse: () => InventoryEntity(
+              id: null,
+              name: '',
+              price: 0,
+              cost_price: 0,
+              quantity: 0,
+              categoryId: null,
+              categoryName: null,
+            ),
+          );
+
+          if (inventoryProduct.id != null) {
+            if (mounted) {
+              final quantity = await showDialog<int>(
+                context: context,
+                builder: (BuildContext context) {
+                  final quantityController = TextEditingController(text: '1');
+                  return AlertDialog(
+                    title: Text('Add ${inventoryProduct.name} to Cart'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Available: ${inventoryProduct.quantity}'),
+                        TextField(
+                          controller: quantityController,
+                          decoration:
+                              const InputDecoration(labelText: 'Quantity'),
+                          keyboardType: TextInputType.number,
+                          autofocus: true,
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final qty =
+                              int.tryParse(quantityController.text) ?? 0;
+                          if (qty > 0 && qty <= inventoryProduct.quantity) {
+                            Navigator.pop(context, qty);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Invalid quantity'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Add to Cart'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (quantity != null && mounted) {
+                _addToCart(inventoryProduct, quantity);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Added ${inventoryProduct.name} to cart'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Product not found in inventory'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Product not recognized. Please add it to inventory first.'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error during scanning: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error scanning: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (cameraController.isStarting) {
+        await cameraController.stop();
+      }
+      cameraController.dispose();
+    }
+  }
+
+  Future<Map<String, dynamic>?> _getProductByBarcode(String barcode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final productData = prefs.getString('barcode_$barcode');
+      if (productData != null) {
+        return json.decode(productData);
+      }
+      return null;
+    } catch (e) {
+      print('Error retrieving product data: $e');
+      return null;
+    }
   }
 }
